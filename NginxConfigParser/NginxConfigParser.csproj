@@ -1,15 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
-        <Authors>Passingwind</Authors>
-        <Version>0.1.0</Version>
+        <TargetFramework>net6.0</TargetFramework>
+        <Authors>Passingwind,egbert_nierop</Authors>
+        <Version>0.1.1</Version>
+        <ImplicitUsings>enable</ImplicitUsings>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/jxnkwlp/NginxConfigParser</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/jxnkwlp/NginxConfigParser</RepositoryUrl>
+        <RepositoryUrl>https://github.com/egbertn/NginxConfigParser</RepositoryUrl>
         <RepositoryType>Github</RepositoryType>
-        <PackageTags>nginx</PackageTags>
-        <Description>A .net standard library for reading and writing nginx configuration files.</Description>
+        <PackageTags>nginx, conf</PackageTags>
+        <Description>A .net 6 library for reading and writing nginx configuration files.</Description>
+        <PackageId>NCV.NginxConfigParser</PackageId>
+        <PackageReleaseNotes>
+            forked from jxnkwlp
+            upgraded to .net 6.0
+            and added async methods
+        </PackageReleaseNotes>
         <Copyright>Passingwind</Copyright>
     </PropertyGroup>
 

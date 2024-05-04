@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,7 +11,7 @@ namespace NginxConfigParser
     {
         private readonly Parser _parser;
 
-        private IList<IToken> _tokens = new List<IToken>();
+        private IList<IToken> _tokens = new Collection<IToken>();
 
         protected NginxConfig(Parser parser)
         {
@@ -25,7 +22,7 @@ namespace NginxConfigParser
 
         /// <summary>
         ///  Create an new
-        /// </summary> 
+        /// </summary>
         public static NginxConfig Create()
         {
             var parser = new Parser(string.Empty);
@@ -40,19 +37,31 @@ namespace NginxConfigParser
         /// <returns><see cref="NginxConfig"/></returns>
         public static NginxConfig LoadFrom(string fileName)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                throw new ArgumentException($"'{nameof(fileName)}' cannot be null or whitespace.", nameof(fileName));
-            }
+            ArgumentNullException.ThrowIfNull(fileName,nameof(fileName));
 
             if (!File.Exists(fileName))
             {
                 throw new FileNotFoundException(fileName);
             }
 
-            // var fs = new FileStream(fileName, FileMode.Open, FileAccess.ReadWrite);
-
             var content = File.ReadAllText(fileName);
+
+            return Load(content);
+        }
+        /// <summary>
+        ///  Load from specific file
+        /// </summary>
+        /// <param name="fileName">The file path</param>
+        /// <returns><see cref="NginxConfig"/></returns>
+        public static async Task<NginxConfig> LoadFromAsync(string fileName)
+        {
+            ArgumentNullException.ThrowIfNull(fileName,nameof(fileName));
+
+            if (!File.Exists(fileName))
+            {
+                throw new FileNotFoundException(fileName);
+            }
+            var content = await File.ReadAllTextAsync(fileName);
 
             return Load(content);
         }
@@ -64,14 +73,8 @@ namespace NginxConfigParser
         /// <returns><see cref="NginxConfig"/></returns>
         public static NginxConfig Load(string content)
         {
-            if (content is null)
-            {
-                throw new ArgumentNullException(nameof(content));
-            }
-
-            var parser = new Parser(content);
-
-            return new NginxConfig(parser);
+            ArgumentNullException.ThrowIfNull(content, nameof(content));
+            return new NginxConfig( new Parser(content));
         }
 
         private void Initial()
@@ -82,45 +85,35 @@ namespace NginxConfigParser
 
         /// <summary>
         ///  Get all values
-        /// </summary> 
+        /// </summary>
         public IEnumerable<IToken> GetTokens() => _tokens;
 
         /// <summary>
         ///  Read value from given the key path.
         ///  if the key not exist, will return null.
-        /// </summary> 
+        /// </summary>
         public IValueToken GetToken(string keyPath)
         {
-            if (string.IsNullOrWhiteSpace(keyPath))
-            {
-                throw new ArgumentException($"'{nameof(keyPath)}' cannot be null or whitespace.", nameof(keyPath));
-            }
-
+            ArgumentNullException.ThrowIfNull(keyPath, nameof(keyPath));
             return GetTokenFromPath(keyPath);
         }
 
         /// <summary>
-        ///  Read value list from given the key path. 
-        /// </summary> 
+        ///  Read value list from given the key path.
+        /// </summary>
         public IList<IValueToken> GetTokens(string keyPath)
         {
-            if (string.IsNullOrWhiteSpace(keyPath))
-            {
-                throw new ArgumentException($"'{nameof(keyPath)}' cannot be null or whitespace.", nameof(keyPath));
-            }
+            ArgumentNullException.ThrowIfNull(keyPath, nameof(keyPath));
 
             return GetTokensFromPath(keyPath);
         }
 
         /// <summary>
         ///  Read all values from specific group key
-        /// </summary> 
+        /// </summary>
         public GroupToken GetGroup(string key)
         {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                throw new ArgumentException($"'{nameof(key)}' cannot be null or whitespace.", nameof(key));
-            }
+            ArgumentNullException.ThrowIfNull(key, nameof(key));
 
             var find = _tokens.Where(x => x is GroupToken).FirstOrDefault(x => ((IValueToken)x).Key == key);
 
@@ -130,16 +123,12 @@ namespace NginxConfigParser
         /// <summary>
         ///  Read value from given the key path.
         ///  if the key not exist, will return null.
-        /// </summary> 
+        /// </summary>
         public IValueToken this[string keyPath]
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(keyPath))
-                {
-                    throw new ArgumentException($"'{nameof(keyPath)}' cannot be null or whitespace.", nameof(keyPath));
-                }
-
+                ArgumentNullException.ThrowIfNull(keyPath, nameof(keyPath));
                 return GetTokenFromPath(keyPath);
             }
         }
@@ -153,10 +142,7 @@ namespace NginxConfigParser
         /// <param name="comment">The comment</param>
         public NginxConfig AddOrUpdate(string keyPath, string value, bool addAsGroup = false, string comment = null)
         {
-            if (string.IsNullOrWhiteSpace(keyPath))
-            {
-                throw new ArgumentException($"'{nameof(keyPath)}' cannot be null or whitespace.", nameof(keyPath));
-            }
+            ArgumentNullException.ThrowIfNull(keyPath, nameof(keyPath));
 
             var tokens = _tokens;
 
@@ -193,7 +179,7 @@ namespace NginxConfigParser
                             break;
                         }
                         else
-                            throw new System.Exception($"The token '{find}' has been exist.");
+                            throw new Exception($"The token '{find}' has been exist.");
 
                     groupToken = (GroupToken)find;
                 }
@@ -238,13 +224,10 @@ namespace NginxConfigParser
 
         /// <summary>
         ///  Remove the value by key path
-        /// </summary> 
+        /// </summary>
         public NginxConfig Remove(string keyPath)
         {
-            if (string.IsNullOrWhiteSpace(keyPath))
-            {
-                throw new ArgumentException($"'{nameof(keyPath)}' cannot be null or whitespace.", nameof(keyPath));
-            }
+            ArgumentNullException.ThrowIfNull(keyPath, nameof(keyPath));
 
             var tokens = _tokens;
 
@@ -270,15 +253,17 @@ namespace NginxConfigParser
                 {
                     // remove
                     if (groupToken == null)
-                        findTokens.ToList().ForEach(item =>
+                    {
+                        foreach (var item in findTokens)
                         {
                             tokens.Remove(item);
-                        });
+                        };
+                    }
                     else
-                        findTokens.ToList().ForEach(item =>
+                       foreach (var item in findTokens)
                         {
                             groupToken.Tokens.Remove(item);
-                        });
+                        };
                 }
                 else
                 {
@@ -288,9 +273,9 @@ namespace NginxConfigParser
                     if (index <= findTokens.Count() - 1)
                         find = findTokens.ElementAt(index);
 
-                    if (find != null && find is GroupToken)
+                    if (find != null && find is GroupToken token)
                     {
-                        groupToken = (GroupToken)find;
+                        groupToken = token;
                     }
                     else
                     {
@@ -309,12 +294,18 @@ namespace NginxConfigParser
         /// <param name="fileName">The file path</param>
         public void Save(string fileName)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                throw new ArgumentException($"'{nameof(fileName)}' cannot be null or whitespace.", nameof(fileName));
-            }
-
+            ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
             Save(fileName, Encoding.Default);
+        }
+
+        /// <summary>
+        ///  Save the configuration content to specific file
+        /// </summary>
+        /// <param name="fileName">The file path</param>
+        public Task SaveAsync(string fileName)
+        {
+            ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
+            return SaveAsync(fileName, Encoding.Default);
         }
 
         /// <summary>
@@ -324,40 +315,42 @@ namespace NginxConfigParser
         /// <param name="encoding">The file encoding</param>
         public void Save(string fileName, Encoding encoding)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                throw new ArgumentException($"'{nameof(fileName)}' cannot be null or whitespace.", nameof(fileName));
-            }
+            ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
+            ArgumentNullException.ThrowIfNull(encoding, nameof(encoding));
 
-            if (encoding is null)
-            {
-                throw new ArgumentNullException(nameof(encoding));
-            }
+            using StreamWriter fsWriter = new (fileName, false, encoding);
+            fsWriter.NewLine = Environment.NewLine;
+            WriteTokenString(_tokens, fsWriter, 0);
+        }
 
-            using (StringWriter sw = new StringWriter(new StringBuilder()))
-            {
-                WriteTokenString(_tokens, sw, 0);
-                using (StreamWriter fsWriter = new StreamWriter(fileName,false,encoding))
-                {
-                    fsWriter.NewLine = Environment.NewLine;
-                    fsWriter.Write(sw);
-                }
-            }
+
+         /// <summary>
+        ///  Save the configuration content to specific file
+        /// </summary>
+        /// <param name="fileName">The file path</param>
+        /// <param name="encoding">The file encoding</param>
+        public async Task SaveAsync(string fileName, Encoding encoding)
+        {
+            ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
+            ArgumentNullException.ThrowIfNull(encoding, nameof(encoding));
+            await using StreamWriter fsWriter = new (fileName, false, encoding);
+            fsWriter.NewLine = Environment.NewLine;
+            WriteTokenString(_tokens, fsWriter, 0);
         }
 
         /// <summary>
         ///  Return configuration file content
-        /// </summary> 
+        /// </summary>
         public override string ToString()
         {
-            StringWriter sw = new StringWriter(new StringBuilder());
+            StringWriter sw = new (new StringBuilder());
 
             WriteTokenString(_tokens, sw, 0);
 
             return sw.GetStringBuilder().ToString();
         }
 
-        private void WriteTokenString(IEnumerable<IToken> tokens, TextWriter textWriter, int level = 0)
+        private static void WriteTokenString(IEnumerable<IToken> tokens, TextWriter textWriter, int level = 0)
         {
             var normalTokens = tokens.Where(x => x is CommentToken || x is ValueToken);
             var groupTokens = tokens.Where(x => x is GroupToken);
@@ -371,7 +364,7 @@ namespace NginxConfigParser
                     textWriter.WriteLine(PadLeftSpace(vaue.ToString(), level));
             }
 
-            foreach (GroupToken group in groupTokens)
+            foreach (GroupToken group in groupTokens.Cast<GroupToken>())
             {
                 //if (group.Parent != null)
                 textWriter.WriteLine();
@@ -383,12 +376,12 @@ namespace NginxConfigParser
 
                 WriteTokenString(group.Tokens, textWriter, level + 1);
 
-                // end 
+                // end
                 textWriter.WriteLine(PadLeftSpace("}", level));
             }
         }
 
-        private string PadLeftSpace(string text, int level = 0)
+        private static string PadLeftSpace(string text, int level = 0)
         {
             return text.PadLeft(text.Length + level * 2, ' ');
         }
@@ -409,7 +402,7 @@ namespace NginxConfigParser
                 if (result != null)
                 {
                     if (result is GroupToken groupToken)
-                        tokens = groupToken.Tokens.ToList();
+                        tokens = groupToken.Tokens.ToArray();
                 }
                 else
                     break;
@@ -442,12 +435,12 @@ namespace NginxConfigParser
 
                     if (current != null && current is GroupToken groupToken)
                     {
-                        tokens = groupToken.Tokens.ToList();
+                        tokens = groupToken.Tokens.ToArray();
                     }
                 }
             }
 
-            return result.ToList();
+            return result.ToArray();
         }
 
         private static IValueToken FindToken(IEnumerable<IToken> tokens, string key, int index = 0)
@@ -460,7 +453,7 @@ namespace NginxConfigParser
             return tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key).Cast<IValueToken>();
         }
 
-        private (string key, int index) ResolveKey(string key)
+        private static (string key, int index) ResolveKey(string key)
         {
             if (!Regex.IsMatch(key, @"^[\w]+(\[\d+\])?$"))
             {
@@ -476,12 +469,12 @@ namespace NginxConfigParser
             {
                 var numberStartIndex = numberStartSymbol + 1;
 
-                if (!int.TryParse(key.Substring(numberStartIndex, key.Length - 1 - numberStartIndex), out index))
+                if (!int.TryParse(key[numberStartIndex..^1], out index))
                 {
                     // TODO
                 }
 
-                keyName = key.Substring(0, numberStartSymbol);
+                keyName = key[..numberStartSymbol];
             }
 
             return (keyName, index);

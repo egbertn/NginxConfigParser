@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.ObjectModel;
 
 namespace NginxConfigParser
 {
@@ -11,7 +9,7 @@ namespace NginxConfigParser
         private GroupToken _currentGroupToken = null;
         private ValueToken _currentToken = null;
 
-        private readonly List<IToken> _tokens = new List<IToken>();
+        private readonly Collection<IToken> _tokens = new();
 
         public Parser(string content)
         {
@@ -24,7 +22,7 @@ namespace NginxConfigParser
         {
             var lineIndex = 0;
 
-            StringReader sr = new StringReader(_content);
+            StringReader sr = new (_content);
             string line = string.Empty;
 
             while ((line = sr.ReadLine()) != null)
@@ -102,7 +100,7 @@ namespace NginxConfigParser
             string commend = string.Empty;
 
             if (keyEndSymbol > -1)
-                key = text.Substring(0, keyEndSymbol);
+                key = text[..keyEndSymbol];
 
             if (groupStartSymbol > keyEndSymbol)
             {
@@ -112,11 +110,11 @@ namespace NginxConfigParser
                 value = text.Substring(keyEndSymbol + 1, endSymbol - keyEndSymbol - 1);
             else if (endSymbol == -1)
             {
-                value = text.Substring(keyEndSymbol + 1);
+                value = text[(keyEndSymbol + 1)..];
             }
 
             if (commendSymbol > keyEndSymbol)
-                commend = text.Substring(commendSymbol + 1).Trim().TrimStart('#').Trim();
+                commend = text[(commendSymbol + 1)..].Trim().TrimStart('#').Trim();
 
             if (groupStartSymbol > -1)
             {

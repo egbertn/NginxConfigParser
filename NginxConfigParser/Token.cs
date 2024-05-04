@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 
 namespace NginxConfigParser
 {
@@ -47,7 +46,7 @@ namespace NginxConfigParser
             Key = key;
             Value = value == null ? value : value.Trim();
             Comment = comment;
-            Tokens = new List<IToken>();
+            Tokens = new Collection<IToken>();
             Parent = parent;
         }
 
