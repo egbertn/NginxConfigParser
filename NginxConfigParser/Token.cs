@@ -71,9 +71,9 @@ namespace NginxConfigParser
         public override string ToString()
         {
             if (!string.IsNullOrWhiteSpace(Comment))
-                return $"{Key} {Value}; # {Comment} => [{Tokens.Count()}]";
+                return $"{Key} {Value}; # {Comment} => [{Tokens.Count}]";
             else
-                return $"{Key} {Value} => [{Tokens.Count()}]";
+                return $"{Key} {Value} => [{Tokens.Count}]";
         }
 
     }

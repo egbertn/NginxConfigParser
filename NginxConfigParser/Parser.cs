@@ -23,8 +23,7 @@ namespace NginxConfigParser
             var lineIndex = 0;
 
             StringReader sr = new (_content);
-            string line = string.Empty;
-
+            string line;
             while ((line = sr.ReadLine()) != null)
             {
                 lineIndex++;

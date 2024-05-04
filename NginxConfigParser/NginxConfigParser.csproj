@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFramework>net6.0</TargetFramework>
         <Authors>Passingwind,egbert_nierop</Authors>
-        <Version>0.1.1</Version>
+        <Version>0.1.2</Version>
         <ImplicitUsings>enable</ImplicitUsings>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/jxnkwlp/NginxConfigParser</PackageProjectUrl>

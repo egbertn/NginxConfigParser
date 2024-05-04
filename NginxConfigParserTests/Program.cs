@@ -33,7 +33,9 @@ namespace NginxConfigParserTests
 
             // load exist files
             var config = await NginxConfig.LoadFromAsync("test.conf");
-
+            var rtmp = config.GetGroup("rtmp");
+            var applications = config.GetTokens("rtmp:server:application");
+            Console.WriteLine(applications.Count); //should be 2
             // read group
             var group = config.GetGroup("http");
             Console.WriteLine(config.GetGroup("http"));
