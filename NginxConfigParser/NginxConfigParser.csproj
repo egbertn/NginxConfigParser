@@ -10,6 +10,9 @@
         <RepositoryUrl>https://github.com/egbertn/NginxConfigParser</RepositoryUrl>
         <RepositoryType>Github</RepositoryType>
         <PackageTags>nginx, conf</PackageTags>
+        <IncludeXmlDocumentation>true</IncludeXmlDocumentation>
+
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <Description>A .net 6 library for reading and writing nginx configuration files.</Description>
         <PackageId>NCV.NginxConfigParser</PackageId>
         <PackageReleaseNotes>
