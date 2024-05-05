@@ -114,10 +114,7 @@ namespace NginxConfigParser
         public GroupToken GetGroup(string key)
         {
             ArgumentNullException.ThrowIfNull(key, nameof(key));
-
-            var find = _tokens.Where(x => x is GroupToken).FirstOrDefault(x => ((IValueToken)x).Key == key);
-
-            return find as GroupToken;
+            return _tokens.OfType<GroupToken>().FirstOrDefault(x => x.Key == key);
         }
 
         /// <summary>
@@ -159,14 +156,14 @@ namespace NginxConfigParser
                 IToken find = null;
                 IEnumerable<IToken> findTokens;
                 if (groupToken == null)
-                    findTokens = tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key);
+                    findTokens = FindTokens(tokens, key) ;
                 else
-                    findTokens = groupToken.Tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key);
+                    findTokens =FindTokens(groupToken.Tokens, key);
+                var count = findTokens.Count();
+                if (index > count)
+                    throw new IndexOutOfRangeException($"The key '{key}' index must be <= {count}");
 
-                if (index > findTokens.Count())
-                    throw new IndexOutOfRangeException($"The key '{key}' index must be <= {findTokens.Count()}");
-
-                if (index <= findTokens.Count() - 1)
+                if (index <= count - 1)
                     find = findTokens.ElementAt(index);
 
                 if (find != null)
@@ -245,9 +242,9 @@ namespace NginxConfigParser
                 IEnumerable<IToken> findTokens;
 
                 if (groupToken == null)
-                    findTokens = tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key);
+                    findTokens = FindTokens(tokens, key);
                 else
-                    findTokens = groupToken.Tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key);
+                    findTokens = FindTokens(groupToken.Tokens, key);
 
                 if (i == length - 1)
                 {
@@ -267,10 +264,11 @@ namespace NginxConfigParser
                 }
                 else
                 {
-                    if (index > findTokens.Count())
-                        throw new IndexOutOfRangeException($"The key '{key}' index must be <= {findTokens.Count()}");
+                    var count = findTokens.Count();
+                    if (index > count)
+                        throw new IndexOutOfRangeException($"The key '{key}' index must be <= {count}");
 
-                    if (index <= findTokens.Count() - 1)
+                    if (index <= count - 1)
                         find = findTokens.ElementAt(index);
 
                     if (find != null && find is GroupToken token)
@@ -319,7 +317,6 @@ namespace NginxConfigParser
             ArgumentNullException.ThrowIfNull(encoding, nameof(encoding));
 
             using StreamWriter fsWriter = new (fileName, false, encoding);
-            fsWriter.NewLine = Environment.NewLine;
             WriteTokenString(_tokens, fsWriter, 0);
         }
 
@@ -334,7 +331,6 @@ namespace NginxConfigParser
             ArgumentNullException.ThrowIfNull(fileName, nameof(fileName));
             ArgumentNullException.ThrowIfNull(encoding, nameof(encoding));
             await using StreamWriter fsWriter = new (fileName, false, encoding);
-            fsWriter.NewLine = Environment.NewLine;
             WriteTokenString(_tokens, fsWriter, 0);
         }
 
@@ -344,16 +340,14 @@ namespace NginxConfigParser
         public override string ToString()
         {
             StringWriter sw = new (new StringBuilder());
-
             WriteTokenString(_tokens, sw, 0);
-
             return sw.GetStringBuilder().ToString();
         }
 
         private static void WriteTokenString(IEnumerable<IToken> tokens, TextWriter textWriter, int level = 0)
         {
             var normalTokens = tokens.Where(x => x is CommentToken || x is ValueToken);
-            var groupTokens = tokens.Where(x => x is GroupToken);
+            var groupTokens = tokens.OfType<GroupToken>();
             textWriter.NewLine = Environment.NewLine;
             foreach (var token in normalTokens)
             {
@@ -364,7 +358,7 @@ namespace NginxConfigParser
                     textWriter.WriteLine(PadLeftSpace(vaue.ToString(), level));
             }
 
-            foreach (GroupToken group in groupTokens.Cast<GroupToken>())
+            foreach (GroupToken group in groupTokens)
             {
                 //if (group.Parent != null)
                 textWriter.WriteLine();
@@ -419,8 +413,6 @@ namespace NginxConfigParser
 
             IEnumerable<IValueToken> result = null;
 
-            IValueToken current = null;
-
             for (int i = 0; i < paths.Length; i++)
             {
                 var (keyName, index) = ResolveKey(paths[i]);
@@ -431,7 +423,7 @@ namespace NginxConfigParser
                 }
                 else
                 {
-                    current = FindToken(tokens, keyName, index);
+                    var current = FindToken(tokens, keyName, index);
 
                     if (current != null && current is GroupToken groupToken)
                     {
@@ -439,19 +431,14 @@ namespace NginxConfigParser
                     }
                 }
             }
-
             return result.ToArray();
         }
 
-        private static IValueToken FindToken(IEnumerable<IToken> tokens, string key, int index = 0)
-        {
-            return tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key).ElementAtOrDefault(index) as IValueToken;
-        }
+        private static IValueToken FindToken(IEnumerable<IToken> tokens, string key, int index = 0) =>
+             tokens.OfType<IValueToken>().Where(x => x.Key == key).ElementAtOrDefault(index);
 
-        private static IEnumerable<IValueToken> FindTokens(IEnumerable<IToken> tokens, string key)
-        {
-            return tokens.Where(x => x is IValueToken).Where(x => ((IValueToken)x).Key == key).Cast<IValueToken>();
-        }
+        private static IEnumerable<IValueToken> FindTokens(IEnumerable<IToken> tokens, string key) =>
+             tokens.OfType<IValueToken>().Where(x => x.Key == key);
 
         private static (string key, int index) ResolveKey(string key)
         {

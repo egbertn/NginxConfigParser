@@ -132,10 +132,19 @@ namespace NginxConfigParserTests
             int found = -1;
             var idx = keys.FirstOrDefault(f => {
                 found++;
-                return f.Value == "live3";
+                return f.Value == "piet";
             });
-
-                await config3.SaveAsync("nginx3.conf");
+            if (idx == null)
+            {
+                found++;
+            }
+                await config3.AddOrUpdate($"rtmp:server:application[{found}]", "piet", true)
+                 .AddOrUpdate($"rtmp:server:application[{found}]:live", "off")
+                 .AddOrUpdate($"rtmp:server:application[{found}]:allow publish", "all")
+                 .AddOrUpdate($"rtmp:server:application[{found}]:allow play", "all")
+                 .AddOrUpdate($"rtmp:server:application[{found}]:record", "off")
+                 .AddOrUpdate($"rtmp:server:application[{found}]:on_publish", "http://127.0.0.1:1935/rtmpauth")
+                .SaveAsync("nginx3.conf");
 
         }
     }
