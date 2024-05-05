@@ -179,7 +179,7 @@ namespace NginxConfigParser
                             break;
                         }
                         else
-                            throw new Exception($"The token '{find}' has been exist.");
+                            throw new Exception($"The token '{find}' already exists.");
 
                     groupToken = (GroupToken)find;
                 }
@@ -455,7 +455,7 @@ namespace NginxConfigParser
 
         private static (string key, int index) ResolveKey(string key)
         {
-            if (!Regex.IsMatch(key, @"^[\w]+(\[\d+\])?$"))
+            if (!Regex.IsMatch(key, @"^[\w\s]+(\[\d+\])?$"))
             {
                 throw new Exception($"The key '{key}' format is incorrect");
             }

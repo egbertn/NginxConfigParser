@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using NginxConfigParser;
 
@@ -53,7 +54,7 @@ namespace NginxConfigParserTests
 
             // read key
 
-            foreach(var item in config.GetTokens("http:include"))
+            foreach (var item in config.GetTokens("http:include"))
             {
                 Console.WriteLine(item);
             };
@@ -100,9 +101,43 @@ namespace NginxConfigParserTests
             // save as file
             await config.SaveAsync("temp.conf");
 
-            // get content and save
-            // Console.WriteLine(config.ToString());
-            // File.WriteAllText("temp2.conf", config.ToString());
+            var config3 = NginxConfig.Create()
+                  .AddOrUpdate("user", "www-data")
+                  .AddOrUpdate("worker_processes", "auto")
+                  .AddOrUpdate("pid", "/run/nginx.pid")
+                  .AddOrUpdate("include", "/etc/nginx/modules-enabled/*.conf")
+
+                  // Events
+                  .AddOrUpdate("events:worker_connections", "768")
+                  .AddOrUpdate("events:multi_accept", "on", comment: "multi_accept on")  // Commented out in the actual configuration
+
+                  // RTMP
+                  .AddOrUpdate("rtmp:server:listen", "127.0.0.1:2001")
+
+                  .AddOrUpdate("rtmp:server:application[0]", "live2", true)
+                 .AddOrUpdate("rtmp:server:application[0]:live", "on")
+                 .AddOrUpdate("rtmp:server:application[0]:allow publish", "all")
+                 .AddOrUpdate("rtmp:server:application[0]:allow play", "all")
+                 .AddOrUpdate("rtmp:server:application[0]:record", "off")
+                 .AddOrUpdate("rtmp:server:application[0]:on_publish", "http://127.0.0.1:1935/rtmpauth")
+
+                 .AddOrUpdate("rtmp:server:application[1]", "live3", true)
+                 .AddOrUpdate("rtmp:server:application[1]:live", "on")
+                 .AddOrUpdate("rtmp:server:application[1]:allow publish", "all")
+                 .AddOrUpdate("rtmp:server:application[1]:allow play", "all")
+                 .AddOrUpdate("rtmp:server:application[1]:record", "off")
+                 .AddOrUpdate("rtmp:server:application[1]:on_publish", "http://127.0.0.1:1935/rtmpauth");
+            // Save file
+            var keys = config3.GetTokens("rtmp:server:application");
+            var count = keys.Count;
+            int found = -1;
+            var idx = keys.FirstOrDefault(f => {
+                found++;
+                return f.Value == "live3";
+            });
+
+                await config3.SaveAsync("nginx3.conf");
+
         }
     }
 }
