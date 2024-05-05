@@ -346,27 +346,25 @@ namespace NginxConfigParser
 
         private static void WriteTokenString(IEnumerable<IToken> tokens, TextWriter textWriter, int level = 0)
         {
-            var normalTokens = tokens.Where(x => x is CommentToken || x is ValueToken);
-            var groupTokens = tokens.OfType<GroupToken>();
             textWriter.NewLine = Environment.NewLine;
-            foreach (var token in normalTokens)
+            foreach (var token in tokens.Where(x => x is CommentToken || x is ValueToken))
             {
                 if (token is CommentToken comment)
                     textWriter.WriteLine(PadLeftSpace(comment.ToString(), level));
 
-                else if (token is ValueToken vaue)
-                    textWriter.WriteLine(PadLeftSpace(vaue.ToString(), level));
+                else if (token is ValueToken value)
+                    textWriter.WriteLine(PadLeftSpace(value.ToString(), level));
             }
 
-            foreach (GroupToken group in groupTokens)
+            foreach (var group in tokens.OfType<GroupToken>())
             {
                 //if (group.Parent != null)
                 textWriter.WriteLine();
 
                 if (!string.IsNullOrWhiteSpace(group.Comment))
-                    textWriter.WriteLine(PadLeftSpace($"{group.Key}  {group.Value} {{ # {group.Comment}", level));
+                    textWriter.WriteLine(PadLeftSpace($"{group.Key} {group.Value} {{ # {group.Comment}", level));
                 else
-                    textWriter.WriteLine(PadLeftSpace($"{group.Key}  {group.Value} {{ ", level));
+                    textWriter.WriteLine(PadLeftSpace($"{group.Key} {group.Value} {{ ", level));
 
                 WriteTokenString(group.Tokens, textWriter, level + 1);
 
@@ -375,10 +373,7 @@ namespace NginxConfigParser
             }
         }
 
-        private static string PadLeftSpace(string text, int level = 0)
-        {
-            return text.PadLeft(text.Length + level * 2, ' ');
-        }
+        private static string PadLeftSpace(string text, int level = 0) => text.PadLeft(text.Length + level * 2, ' ');
 
         private IValueToken GetTokenFromPath(string keyPath)
         {
