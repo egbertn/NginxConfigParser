@@ -129,7 +129,6 @@ namespace NginxConfigParserTests
                  .AddOrUpdate("rtmp:server:application[1]:on_publish", "http://127.0.0.1:1935/rtmpauth");
             // Save file
             var keys = config3.GetTokens("rtmp:server:application");
-            var count = keys.Count;
             int found = -1;
             var idx = keys.FirstOrDefault(f => {
                 found++;
